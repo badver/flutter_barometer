@@ -61,7 +61,16 @@ class _MyAppState extends State<MyApp> {
                     setState(() {
                       _platformVersion = data.toString();
                     });
-                  })
+                  }),
+              StreamBuilder(
+                stream: FlutterBarometer.pressureStream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Text('Value from stream: ${snapshot.data}');
+                  }
+                  return Text('No stream data');
+                },
+              )
             ],
           ),
         ),

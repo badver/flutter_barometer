@@ -1,5 +1,6 @@
 package ru.badver.flutterbarometer;
 
+import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -11,21 +12,31 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import org.jetbrains.annotations.Nullable;
+
 import static android.content.Context.SENSOR_SERVICE;
 
 /** FlutterBarometerPlugin */
-public class FlutterBarometerPlugin implements MethodCallHandler, SensorEventListener {
+public class FlutterBarometerPlugin implements MethodCallHandler, SensorEventListener, EventChannel.StreamHandler {
 
   private SensorManager sensorManager;
+  @Nullable
   private Sensor barometer;
   private Registrar registrar;
   private float lastReading = 0.0f;
   private boolean initialized = false;
 
+  @Nullable
+  private EventChannel.EventSink eventSink = null;
+
   /** Plugin registration. */
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "flutter_barometer");
-    channel.setMethodCallHandler(new FlutterBarometerPlugin(registrar));
+    FlutterBarometerPlugin plugin = new FlutterBarometerPlugin(registrar);
+    channel.setMethodCallHandler(plugin);
+
+    final EventChannel eventChannel = new EventChannel(registrar.messenger(), "flutter_barometer_pressureStream");
+    eventChannel.setStreamHandler(plugin);
   }
 
   public FlutterBarometerPlugin(Registrar registrar) {
@@ -35,9 +46,13 @@ public class FlutterBarometerPlugin implements MethodCallHandler, SensorEventLis
   boolean initializeBarometer() {
     if (!initialized) {
       this.sensorManager = (SensorManager) registrar.activeContext().getSystemService(SENSOR_SERVICE);
-      this.barometer = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-      sensorManager.registerListener(this, barometer, SensorManager.SENSOR_DELAY_NORMAL);
-      initialized = true;
+      if (sensorManager != null) {
+        this.barometer = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        sensorManager.registerListener(this, barometer, SensorManager.SENSOR_DELAY_NORMAL);
+        initialized = true;
+      } else {
+        initialized = false;
+      }
     }
     return initialized;
   }
@@ -70,10 +85,23 @@ public class FlutterBarometerPlugin implements MethodCallHandler, SensorEventLis
   @Override
   public void onSensorChanged(SensorEvent sensorEvent) {
     lastReading = sensorEvent.values[0];
+    if (eventSink != null) {
+      eventSink.success(lastReading);
+    }
   }
 
   @Override
   public void onAccuracyChanged(Sensor sensor, int i) {
 
+  }
+
+  @Override
+  public void onListen(Object o, EventChannel.EventSink eventSink) {
+    this.eventSink = eventSink;
+  }
+
+  @Override
+  public void onCancel(Object o) {
+    eventSink = null;
   }
 }
