@@ -15,4 +15,9 @@ class FlutterBarometer {
     final double data = await _channel.invokeMethod('getBarometer');
     return data;
   }
+
+  static Future<bool> initialize() async {
+    final bool data = await _channel.invokeMethod('initialize');
+    return data;
+  }
 }

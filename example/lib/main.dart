@@ -25,6 +25,8 @@ class _MyAppState extends State<MyApp> {
     String platformVersion;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
+      final initState = await FlutterBarometer.initialize();
+      print('Init state: $initState');
 //      platformVersion = await FlutterBarometer.platformVersion;
       final res = await FlutterBarometer.barometer;
       platformVersion = res.toString();
@@ -50,7 +52,19 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+          child: Column(
+            children: <Widget>[
+              Text('Running on: $_platformVersion\n'),
+              RaisedButton(
+                  child: Text('Press to get new data'),
+                  onPressed: () async {
+                    final data = await FlutterBarometer.barometer;
+                    setState(() {
+                      _platformVersion = data.toString();
+                    });
+                  })
+            ],
+          ),
         ),
       ),
     );
