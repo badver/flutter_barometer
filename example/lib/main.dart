@@ -25,7 +25,9 @@ class _MyAppState extends State<MyApp> {
     String platformVersion;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      platformVersion = await FlutterBarometer.platformVersion;
+//      platformVersion = await FlutterBarometer.platformVersion;
+      final res = await FlutterBarometer.barometer;
+      platformVersion = res.toString();
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }

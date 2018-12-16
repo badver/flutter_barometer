@@ -10,4 +10,9 @@ class FlutterBarometer {
     final String version = await _channel.invokeMethod('getPlatformVersion');
     return version;
   }
+
+  static Future<double> get barometer async {
+    final double data = await _channel.invokeMethod('getBarometer');
+    return data;
+  }
 }
